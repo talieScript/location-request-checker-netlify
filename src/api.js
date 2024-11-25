@@ -16,7 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 router.get('/', async (req, res) => {
   res.json({
-    hello: 'hi!',
+    message: 'Hello World',
   });
 });
 
