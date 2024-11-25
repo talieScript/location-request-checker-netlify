@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New location helper</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+      margin: auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      justify-content: center;
+    }
+    .start-button, .delete-button, .add-button, .skip-button, .open-button {
+      background-color: #3498db;
+      color: #fff;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    .delete-button {
+      background-color: red;
+    }
+    .add-button {
+      background-color: green;
+    }
+    .form {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      display: none;
+      margin-top: 20px;
+    }
+    .number {
+      border: 1px dashed black;
+      width: max-content;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    .input {
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>New location helper</h1>
+
+<div class="container">
+
+  <button class="start-button" id="start-button" onclick="fetchData()">Start</button>
+
+  <form class="form">
+
+    <div class="number" id="number"></div>
+
+    <div><label for="id">ID:</label> <span id="id"></span></div>
+    <div><label for="created_at">Created At:</label> <span id="created_at"></span></div>
+
+    <label for="latlon">Latlon</label>
+    <input class="input" id="latlon" type="text">
+
+    <label for="name">Name</label>
+    <input class="input" id="name" type="text">
+
+    <label for="security">Security</label>
+    <select class="input" id="security">
+      <option value="GOUND_ANCHOR">GOUND_ANCHOR</option>
+      <option value="LOCKING_RAIL">LOCKING_RAIL</option>
+      <option value="NONE">NONE</option>
+      <option value="">Unknown</option>
+    </select>
+
+    <label for="size">Size</label>
+    <select class="input" name="size" id="size">
+      <option value="XS">1-2</option>
+      <option value="SM">2-4</option>
+      <option value="MD">5-7</option>
+      <option value="LG">8-10</option>
+      <option value="XL">10+</option>
+    </select>
+
+    <label for="type">Type</label>
+    <select class="input" id="type">
+      <option value="on_pavement">on pavement</option>
+      <option value="cafe_meetup">cafe/meetup location</option>
+      <option value="beautiful_spot">beauty spot</option>
+      <option value="off_road">off road</option>
+      <option value="bay">bay</option>
+    </select>
+
+    <label for="cost">Cost</label>
+    <select class="input" name="cost" id="cost">
+      <option value="free">free</option>
+      <option value="paid">paid</option>
+      <option value="">unknown</option>
+    </select>
+
+    <label for="update-location">Update location:</label>
+    <pre id="update-location"></pre>
+
+    <div>
+      <button class="delete-button" type="button" onclick="deleteLocation()">Delete location request</button>
+      <button id="add-update-button" class="add-button" type="button" onclick="addLocation()">Add location to map</button>
+      <button class="skip-button" type="button" onclick="next()">Skip</button>
+    </div>
+    <button class="open-button" type="button" onclick="openInGoogleMaps()">Open in Google Maps</button>
+  </form>
+
+  <span class="error" id="error"></span>
+</div>
+
+<script>
+  // check for auth token
+  const accessToken = localStorage.getItem('accessToken');
+  if (!accessToken) {
+    window.location.href = '/login';
+  }
+
+  let locations = undefined;
+  let index = 0;
+  let total = 0;
+
+  function openInGoogleMaps() {
+    const latlonArray = JSON.parse(locations[index].latlon);
+    const [latitude, longitude] = latlonArray;
+
+    if (latitude !== undefined && longitude !== undefined) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`);
+    }
+  }
+
+  async function next() {
+    index++;
+    document.getElementById('error').innerHTML = '';
+    if (index >= locations.length) {
+      index = 0;
+    }
+    document.getElementById('number').innerText = index + ' / ' + total;
+    const location = locations[index];
+    // Parse and format the date
+    const parsedDate = new Date(location.created_at);
+    const formattedDate = parsedDate.toLocaleString();
+
+    console.log(location);
+    document.getElementById('id').innerText = location.id;
+    document.getElementById('created_at').innerText = formattedDate;
+    document.getElementById('name').value = location.name;
+    document.getElementById('security').value = location.security;
+    document.getElementById('size').value = location.size || null;
+    document.getElementById('type').value = location.type;
+    document.getElementById('cost').value = location.cost;
+    document.getElementById('latlon').value = location.latlon.substring(1, location.latlon.length-1);
+
+    // open in google maps
+    const latlonArray = JSON.parse(location.latlon);
+    const [latitude, longitude] = latlonArray;
+
+    if (location.location_id) {
+      // update the button text
+      document.getElementById('add-update-button').innerText = 'Update existing location on map';
+
+      try {
+        const locationToUpdate = await fetch('/api/location/' + location.location_id);
+        document.getElementById('update-location').innerText = JSON.stringify(await locationToUpdate.json(), null, 2);
+      } catch (error) {
+        console.error(error);
+        document.getElementById('error').innerHTML = error.message;
+      }
+    } else {
+      document.getElementById('add-update-button').innerText = 'Add location to map';
+      document.getElementById('update-location').innerHTML = '';
+    }
+  }
+
+  async function fetchData() {
+    try {
+      const response = await fetch('/api/data');
+      if (!response.ok) {
+        const message = `An error has occurred: ${response.status}`;
+        if(response.status === 401) {
+          let isConfirmed = confirm(message);
+          if (isConfirmed) {
+            window.location.href = '/login';
+          }
+          return;
+        }
+        throw new Error(message);
+      }
+      locations = await response.json();
+      total = locations.length;
+    } catch (error) {
+      console.error(error);
+      document.getElementById('error').innerHTML = error.message;
+    }
+
+    document.getElementById('start-button').remove();
+    document.querySelector('form').style.display = 'flex';
+
+    // set the first location
+    next();
+  }
+
+  async function deleteLocation() {
+    const confirmDelete = confirm("Are you sure you want to delete this location request?");
+    if (confirmDelete) {
+      try {
+        const response = await fetch('/api/location/' + locations[index].id, {
+          method: 'DELETE',
+        });
+        const result = await response.json();
+        next(); // go to the next location
+      } catch (error) {
+        console.error(error);
+        document.getElementById('error').innerHTML = error.message;
+      }
+    }
+  }
+
+  async function addLocation() {
+    const confirmAdd = confirm("Are you sure you want to add this location?");
+    if (confirmAdd) {
+      const updatedLocation = {
+        name: document.getElementById('name').value,
+        security: document.getElementById('security').value,
+        size: document.getElementById('size').value,
+        type: document.getElementById('type').value,
+        cost: document.getElementById('cost').value,
+        latlon: document.getElementById('latlon').value,
+      };
+      try {
+        const endPoint = locations[index].location_id ? `/api/data/${locations[index].location_id}` : '/api/data';
+        method = locations[index].location_id ? 'PUT' : 'POST';
+        const response = await fetch(endPoint, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updatedLocation),
+        });
+        const result = await response.json();
+        deleteLocation(); // delete the location request
+      } catch (error) {
+        console.error(error);
+        document.getElementById('error').innerHTML = error.message;
+      }
+    }
+  }
+
+</script>
+
+</body>
+</html>
