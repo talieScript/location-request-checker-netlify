@@ -14,6 +14,10 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+router.post('/ping', jsonParser, async (req, res) => {
+  res.json({ success: true });
+});
+
 router.post('/login', jsonParser, async (req, res) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: req.body.email,
