@@ -14,7 +14,7 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-router.get('/ping', async (req, res) => {
+router.get('/', async (req, res) => {
   res.json({
     hello: 'hi!',
   });
@@ -152,7 +152,7 @@ router.delete('/location/:id', async (req, res) => {
   }
 });
 
-router.use(`/.netlify/functions/api`, router);
+app.use(`/.netlify/functions/api`, router);
 
 module.exports = app;
 module.exports.handler = serverless(app);
