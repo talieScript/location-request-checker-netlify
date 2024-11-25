@@ -14,8 +14,10 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-router.post('/ping', jsonParser, async (req, res) => {
-  res.json({ success: true });
+router.get('/ping', async (req, res) => {
+  res.json({
+    hello: 'hi!',
+  });
 });
 
 router.post('/login', jsonParser, async (req, res) => {
