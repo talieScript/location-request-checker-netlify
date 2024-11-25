@@ -29,7 +29,7 @@ router.post('/login', jsonParser, async (req, res) => {
 });
 
 // API endpoint to fetch data from the Supabase table
-router.get('/api/data', async (req, res) => {
+router.get('/data', async (req, res) => {
   const sessionData = await supabase.auth.getSession();
 
   if (!sessionData.data.session) {
@@ -51,7 +51,7 @@ router.get('/api/data', async (req, res) => {
 });
 
 // API endpoint to insert data into the Supabase table
-router.post('/api/data', jsonParser, async (req, res) => {
+router.post('/data', jsonParser, async (req, res) => {
   const sessionData = await supabase.auth.getSession();
 
   if (!sessionData.data.session) {
@@ -76,7 +76,7 @@ router.post('/api/data', jsonParser, async (req, res) => {
   }
 });
 
-router.put('/api/data/:id', jsonParser, async (req, res) => {
+router.put('/data/:id', jsonParser, async (req, res) => {
   const sessionData = await supabase.auth.getSession();
 
   if (!sessionData.data.session) {
@@ -107,7 +107,7 @@ router.put('/api/data/:id', jsonParser, async (req, res) => {
 });
 
 // API get location from id
-router.get('/api/location/:id', async (req, res) => {
+router.get('/location/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('location')
@@ -124,7 +124,7 @@ router.get('/api/location/:id', async (req, res) => {
   }
 });
 
-router.delete('/api/location/:id', async (req, res) => {
+router.delete('/location/:id', async (req, res) => {
   const sessionData = await supabase.auth.getSession();
 
   if (!sessionData.data.session) {
