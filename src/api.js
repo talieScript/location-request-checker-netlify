@@ -1,6 +1,7 @@
 const express = require('express');
 const serverless = require('serverless-http');
 const { createClient } = require('@supabase/supabase-js');
+const bodyParser = require('body-parser');
 
 require('dotenv').config();
 
